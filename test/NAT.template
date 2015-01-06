@@ -1,0 +1,579 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Conditions": {
+        "EIP1Condition": {
+            "Fn::Equals": [
+                {
+                    "Ref": "NAT1AllocID"
+                },
+                "NONE"
+            ]
+        },
+        "EIP2Condition": {
+            "Fn::Equals": [
+                {
+                    "Ref": "NAT2AllocID"
+                },
+                "NONE"
+            ]
+        }
+    },
+    "Description": "AWS CloudFormation template to create an HA NAT Gateway infrastructure for 2AZs.  Creates a NAT Role in IAM for the credentials needed.  Uses Amazon's NAT AMI. Creates 2 or 3 NAT Gateway instances across 2 or 3 AZs in an ASG, depending on whether a 3rd subnet ID is provided in the parameters.  Each HA NAT will monitor other instances in the ASG and take ownership immediately, if not pingable. When a new instance is launched, it will take back ownership if its own AZ.",
+    "Outputs": {
+        "NAT1EIP": {
+            "Condition": "EIP1Condition",
+            "Description": "NAT #1 EIP.",
+            "Value": {
+                "Ref": "NAT1EIP"
+            }
+        },
+        "NAT2EIP": {
+            "Condition": "EIP2Condition",
+            "Description": "NAT #2 EIP.",
+            "Value": {
+                "Ref": "NAT2EIP"
+            }
+        }
+    },
+    "Parameters": {
+        "AZ1Index": {
+            "ConstraintDescription": "Must be an integer between 0 and 4 inclusive",
+            "Default": 0,
+            "Description": "First Availability Zone index",
+            "MaxValue": 4,
+            "MinValue": 0,
+            "Type": "Number"
+        },
+        "AZ2Index": {
+            "ConstraintDescription": "Must be an integer between 0 and 4 inclusive",
+            "Default": 1,
+            "Description": "Second Availability Zone index",
+            "MaxValue": 4,
+            "MinValue": 0,
+            "Type": "Number"
+        },
+        "BillingIDTag": {
+            "Default": "",
+            "Description": "Enter the Billing ID Tag for this account",
+            "Type": "String"
+        },
+        "EnvironmentTag": {
+            "Default": "",
+            "Description": "Enter the Environment Tag for this account",
+            "Type": "String"
+        },
+        "KeyName": {
+            "Description": "Enter KeyPair name to use to build the NAT instance",
+            "Type": "String",
+           "MinLength": "2"
+        },
+        "NAT1AllocID": {
+            "Default": "",
+            "Description": "Enter the Allocation ID of the 1st EIP...must allocate in VPC console (enter NONE to create EIP with template)",
+            "Type": "String"
+        },
+        "InstanceSize": {
+            "Default": "m1.small",
+            "Description": "Default instance size",
+            "Type": "String"
+        },
+        "NAT2AllocID": {
+            "Default": "",
+            "Description": "Enter the Allocation ID of the 2nd EIP...must allocate in VPC console (enter NONE to create EIP with template)",
+            "Type": "String"
+        },
+        "NATAmiID": {
+            "Default": "ami-4f9fee26",
+            "Description": "AMI ID to use for NAT instance in the Auto-Scaling Group",
+            "Type": "String"
+        },
+        "OwnerTag": {
+            "Default": "",
+            "Description": "Enter the Owner Tag for this account",
+            "Type": "String"
+        },
+        "ProductTag": {
+            "Default": "",
+            "Description": "Enter the Product Tag for this account (e.g., gsmobile)",
+            "Type": "String"
+        },
+        "PublicSubnet1": {
+            "Default": "subnet-xxxxxxxx",
+            "Description": "Enter ID for the Public Subnet 1 from VPC creation",
+            "Type": "String",
+           "MinLength": "15"
+        },
+        "PublicSubnet2": {
+            "Default": "subnet-xxxxxxxx",
+            "Description": "Enter ID for the Public Subnet 2 from VPC creation",
+            "Type": "String",
+           "MinLength": "15"
+        },
+        "VPCCIDR": {
+            "Default": "0.0.0.0/0",
+            "Description": "VPC CIDR block",
+            "Type": "String",
+           "MinLength": "9",
+           "MaxLength": "18"
+        },
+        "VPCID": {
+            "Default": "vpc-xxxxxxxx",
+            "Description": "Enter the VPC ID from VPC creation",
+            "Type": "String",
+           "MinLength": "12"
+        }
+    },
+    "Resources": {
+        "ASGNAT": {
+            "Properties": {
+                "AvailabilityZones": [
+                    {
+                        "Fn::Select": [
+                            {
+                                "Ref": "AZ1Index"
+                            },
+                            {
+                                "Fn::GetAZs": ""
+                            }
+                        ]
+                    },
+                    {
+                        "Fn::Select": [
+                            {
+                                "Ref": "AZ2Index"
+                            },
+                            {
+                                "Fn::GetAZs": ""
+                            }
+                        ]
+                    }
+                ],
+                "Cooldown": "30",
+                "DesiredCapacity": "2",
+                "HealthCheckGracePeriod": "0",
+                "HealthCheckType": "EC2",
+                "LaunchConfigurationName": {
+                    "Ref": "NATlaunchconfig"
+                },
+                "MaxSize": "2",
+                "MinSize": "2",
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "PropagateAtLaunch": true,
+                        "Value": "HA-NAT-Gateway"
+                    },
+                    {
+                        "Key": "Vpc",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Ref": "VPCID"
+                        }
+                    },
+                    {
+                        "Key": "Owner",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Ref": "OwnerTag"
+                        }
+                    },
+                    {
+                        "Key": "BillingID",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Ref": "BillingIDTag"
+                        }
+                    },
+                    {
+                        "Key": "Environment",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Ref": "EnvironmentTag"
+                        }
+                    },
+                    {
+                        "Key": "Product",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Ref": "ProductTag"
+                        }
+                    }
+                ],
+                "VPCZoneIdentifier": [
+                    {
+                        "Ref": "PublicSubnet1"
+                    },
+                    {
+                        "Ref": "PublicSubnet2"
+                    }
+                ]
+            },
+            "Type": "AWS::AutoScaling::AutoScalingGroup"
+        },
+        "ASGNATScaleDownPolicy": {
+            "Properties": {
+                "AdjustmentType": "PercentChangeInCapacity",
+                "AutoScalingGroupName": {
+                    "Ref": "ASGNAT"
+                },
+                "Cooldown": "30",
+                "ScalingAdjustment": "-1"
+            },
+            "Type": "AWS::AutoScaling::ScalingPolicy"
+        },
+        "ASGNATScaleUpPolicy": {
+            "Properties": {
+                "AdjustmentType": "PercentChangeInCapacity",
+                "AutoScalingGroupName": {
+                    "Ref": "ASGNAT"
+                },
+                "Cooldown": "30",
+                "ScalingAdjustment": "1"
+            },
+            "Type": "AWS::AutoScaling::ScalingPolicy"
+        },
+        "NAT1EIP": {
+            "Condition": "EIP1Condition",
+            "Properties": {
+                "Domain": "vpc"
+            },
+            "Type": "AWS::EC2::EIP"
+        },
+        "NAT2EIP": {
+            "Condition": "EIP2Condition",
+            "Properties": {
+                "Domain": "vpc"
+            },
+            "Type": "AWS::EC2::EIP"
+        },
+        "NATRole": {
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "sts:AssumeRole"
+                            ],
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": [
+                                        "ec2:*",
+                                        "autoscaling:Describe*"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                }
+                            ]
+                        },
+                        "PolicyName": "NAT_Takeover"
+                    }
+                ]
+            },
+            "Type": "AWS::IAM::Role"
+        },
+        "NATRoleProfile": {
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "NATRole"
+                    }
+                ]
+            },
+            "Type": "AWS::IAM::InstanceProfile"
+        },
+        "NATSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "Enable internal access to the NAT device",
+                "SecurityGroupEgress": [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "80",
+                        "IpProtocol": "tcp",
+                        "ToPort": "80"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "443",
+                        "IpProtocol": "tcp",
+                        "ToPort": "443"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "8140",
+                        "IpProtocol": "tcp",
+                        "ToPort": "8140"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "10050",
+                        "IpProtocol": "tcp",
+                        "ToPort": "10052"
+                    },
+                    {
+                        "CidrIp": "198.185.18.0/24",
+                        "FromPort": "-1",
+                        "IpProtocol": "icmp",
+                        "ToPort": "-1"
+                    },
+                    {
+                        "CidrIp": {
+                            "Ref": "VPCCIDR"
+                        },
+                        "FromPort": "-1",
+                        "IpProtocol": "icmp",
+                        "ToPort": "-1"
+                    }
+                ],
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": {
+                            "Ref": "VPCCIDR"
+                        },
+                        "FromPort": "80",
+                        "IpProtocol": "tcp",
+                        "ToPort": "80"
+                    },
+                    {
+                        "CidrIp": {
+                            "Ref": "VPCCIDR"
+                        },
+                        "FromPort": "443",
+                        "IpProtocol": "tcp",
+                        "ToPort": "443"
+                    },
+                    {
+                        "CidrIp": {
+                            "Ref": "VPCCIDR"
+                        },
+                        "FromPort": "8140",
+                        "IpProtocol": "tcp",
+                        "ToPort": "8140"
+                    },
+                    {
+                        "CidrIp": {
+                            "Ref": "VPCCIDR"
+                        },
+                        "FromPort": "10050",
+                        "IpProtocol": "tcp",
+                        "ToPort": "10052"
+                    },
+                    {
+                        "CidrIp": {
+                            "Ref": "VPCCIDR"
+                        },
+                        "FromPort": "-1",
+                        "IpProtocol": "icmp",
+                        "ToPort": "-1"
+                    },
+                    {
+                        "CidrIp": "198.185.18.0/24",
+                        "FromPort": "-1",
+                        "IpProtocol": "icmp",
+                        "ToPort": "-1"
+                    },
+                    {
+                        "CidrIp": "198.185.18.0/24",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "VPCID"
+                }
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        "NATlaunchconfig": {
+            "Properties": {
+                "AssociatePublicIpAddress": "true",
+                "IamInstanceProfile": {
+                    "Ref": "NATRoleProfile"
+                },
+                "ImageId": {
+                    "Ref": "NATAmiID"
+                },
+                "InstanceType": { "Ref": "InstanceSize" },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "SecurityGroups": [
+                    {
+                        "Ref": "NATSecurityGroup"
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -v\n",
+                                "yum update -y aws*\n",
+                                ". /etc/profile.d/aws-apitools-common.sh\n",
+                                "# Configure iptables\n",
+                                "/sbin/iptables -t nat -A POSTROUTING -o eth0 -s 0.0.0.0/0 -j MASQUERADE\n",
+                                "/sbin/iptables-save > /etc/sysconfig/iptables\n",
+                                "# Configure ip forwarding and redirects\n",
+                                "echo 1 >  /proc/sys/net/ipv4/ip_forward && echo 0 >  /proc/sys/net/ipv4/conf/eth0/send_redirects\n",
+                                "mkdir -p /etc/sysctl.d/\n",
+                                "cat <<EOF > /etc/sysctl.d/nat.conf,\n",
+                                "net.ipv4.ip_forward = 1\n",
+                                "net.ipv4.conf.eth0.send_redirects = 0\n",
+                                "EOF\n",
+                                "\n",
+                                "# Specify the EC2 region that this will be running in (e.g. https://ec2.REPLACE_THIS_TEXT_WITH_AWS_REGION_NAME.amazonaws.com)\n",
+                                "AZ=`/usr/bin/curl --silent http://169.254.169.254/latest/meta-data/placement/availability-zone`\n",
+                                "EC2REGION=\"${AZ%?}\"\n",
+                                "EC2_URL=\"https://ec2.$EC2REGION.amazonaws.com\"\n",
+                                "Instance_ID=`/usr/bin/curl --silent http://169.254.169.254/latest/meta-data/instance-id`\n",
+                                "/opt/aws/bin/ec2-modify-instance-attribute $Instance_ID --source-dest-check false -U $EC2_URL\n",
+                                "VPC_ID=`/opt/aws/bin/ec2-describe-instances $Instance_ID -U $EC2_URL | grep -w Vpc | awk '{print $5}'`\n",
+                                "My_RT_ID=`/opt/aws/bin/ec2-describe-route-tables --filter \"vpc-id=$VPC_ID\" -U $EC2_URL | grep -w AvailabilityZone | grep -w $AZ | awk '{print $3}'`\n",
+                                "/opt/aws/bin/ec2-replace-route $My_RT_ID -r 0.0.0.0/0 -i $Instance_ID -U $EC2_URL\n",
+                                "# If replace-route failed, then the route might not exist and may need to be created instead\n",
+                                "if [ \"$?\" != 0 ]; then /opt/aws/bin/ec2-create-route $My_RT_ID -r 0.0.0.0/0 -i $Instance_ID -U $EC2_URL ; fi\n",
+                                "ALLOCLIST=\"",
+                                {
+                                    "Fn::If": [
+                                        "EIP1Condition",
+                                        {
+                                            "Fn::GetAtt": [
+                                                "NAT1EIP",
+                                                "AllocationId"
+                                            ]
+                                        },
+                                        {
+                                            "Ref": "NAT1AllocID"
+                                        }
+                                    ]
+                                },
+                                " ",
+                                {
+                                    "Fn::If": [
+                                        "EIP2Condition",
+                                        {
+                                            "Fn::GetAtt": [
+                                                "NAT2EIP",
+                                                "AllocationId"
+                                            ]
+                                        },
+                                        {
+                                            "Ref": "NAT2AllocID"
+                                        }
+                                    ]
+                                },
+                                "\"\n",
+                                "for allocID in $ALLOCLIST ; do\n",
+                                "  instanceAssigned=`/usr/bin/aws ec2 describe-addresses --region $EC2REGION --output text | grep -w $allocID | awk '{print $3}'`\n",
+                                "  if [ \"$instanceAssigned\" = 'vpc' ] ; then\n",
+                                "    /usr/bin/aws ec2 associate-address --allocation-id $allocID --instance-id $Instance_ID --region $EC2REGION\n",
+                                "    if [ \"$?\" -eq 0 ]; then break; fi\n",
+                                "  fi\n",
+                                "done\n",
+                                "echo '#!/bin/sh' >/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'LOCAL_INSTANCE=`/usr/bin/curl --silent http://169.254.169.254/latest/meta-data/instance-id`' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'AZ=`/usr/bin/curl --silent http://169.254.169.254/latest/meta-data/placement/availability-zone`' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'EC2REGION=\"${AZ%?}\"' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'EC2_URL=\"https://ec2.$EC2REGION.amazonaws.com\"' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'VPC_ID=`/opt/aws/bin/ec2-describe-instances $LOCAL_INSTANCE -U $EC2_URL | grep -w Vpc | awk '\"'\"'{print $5}'\"'\"'`' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'LOCAL_ROUTE=`/opt/aws/bin/ec2-describe-route-tables --filter \"vpc-id=$VPC_ID\" -U $EC2_URL | grep -w AvailabilityZone | grep -w $AZ | awk '\"'\"'{print $3}'\"'\"'`' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '/opt/aws/bin/ec2-replace-route $LOCAL_ROUTE -r 0.0.0.0/0 -i $LOCAL_INSTANCE -U $EC2_URL  #Taking over local route' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'RouteTables=`/opt/aws/bin/ec2-describe-route-tables --filter \"vpc-id=$VPC_ID\" -U $EC2_URL | grep -w AvailabilityZone | grep -v $AZ | awk '\"'\"'{print $3 \":\" $5}'\"'\"'`' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'Num_Pings=2' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'Ping_Timeout=1' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'Wait_Between_Pings=3' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'counter=0' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'count=1' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'REMOTE_ROUTE2=\"\"' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'for RouteInfo in $RouteTables; do  #Processing AZs, based on the ones that are in the route tables tags' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  let counter++' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  RouteTable=$(echo $RouteInfo | cut -f1 -d:)' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  AZName=$(echo $RouteInfo | cut -f2 -d:)' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  if [ $counter -eq 1 ]; then' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    REMOTE_ROUTE1=$RouteTable' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    INSTANCE_IP1=`/opt/aws/bin/ec2-describe-instances -U $EC2_URL --filter \"tag:Vpc=$VPC_ID\" --filter \"tag:Name=HA-NAT-Gateway\" --filter \"availability-zone=$AZName\" | grep PRIVATEIPADDRESS -m 1 | awk '\"'\"'{print $2}'\"'\"'`' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    AZ1=$AZName' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  if [ $counter -eq 2 ]; then' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    REMOTE_ROUTE2=$RouteTable' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    INSTANCE_IP2=`/opt/aws/bin/ec2-describe-instances -U $EC2_URL --filter \"tag:Vpc=$VPC_ID\" --filter \"tag:Name=HA-NAT-Gateway\" --filter \"availability-zone=$AZName\" | grep PRIVATEIPADDRESS -m 1 | awk '\"'\"'{print $2}'\"'\"'`' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    AZ2=$AZName' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'done' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'function check_route {' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  INSTANCE_IP=\"\"' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  REMOTE_ROUTE=$1' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  AZNAME=$2' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  INSTANCE_IP=$4'  >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  if [[ $INSTANCE_IP != \"\" ]]; then ' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '     pingresult=`ping -c $Num_Pings -W $Ping_Timeout $INSTANCE_IP | grep time= | wc -l`' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '     if [ $? -eq 0 ]; then ' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '       if [[ $pingresult -eq 0 ]] ; then ' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '         /opt/aws/bin/ec2-replace-route $REMOTE_ROUTE -r 0.0.0.0/0 -i $LOCAL_INSTANCE -U $EC2_URL' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '         if [ $? -eq 0 ]; then echo `date` \"-- $INSTANCE_IP not alive -- $LOCAL_INSTANCE successfully took over $REMOTE_ROUTE for $AZNAME\" ' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '           INSTANCE_IP=`/opt/aws/bin/ec2-describe-instances -U $EC2_URL --filter \"tag:Vpc=$VPC_ID\" --filter \"tag:Name=HA-NAT-Gateway\" --filter \"availability-zone=$AZName\" | grep PRIVATEIPADDRESS -m 1 | awk '\"'\"'{print $2}'\"'\"'`' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '           if [[ $3 -eq 1 ]] ; then INSTANCE_IP1=$INSTANCE_IP ; fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '           if [[ $3 -eq 2 ]] ; then INSTANCE_IP2=$INSTANCE_IP ; fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '         fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '         count=0' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '      else ' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '         if [[ $count -eq 5 ]] ; then' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '           INSTANCE_ID=`/opt/aws/bin/ec2-describe-route-tables $REMOTE_ROUTE -U $EC2_URL | grep -w 0.0.0.0/0 | awk '\"'\"'{print $2}'\"'\"'`' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '           echo `date` \"-- $INSTANCE_IP - $INSTANCE_ID - $AZNAME - $REMOTE_ROUTE remote route is healthy *****\" ' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '           count=0' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '           sleep $Wait_Between_Pings' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '         fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '      fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  else' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '       INSTANCE_IP=`/opt/aws/bin/ec2-describe-instances -U $EC2_URL --filter \"tag:Vpc=$VPC_ID\" --filter \"tag:Name=HA-NAT-Gateway\" --filter \"availability-zone=$AZName\" | grep PRIVATEIPADDRESS -m 1 | awk '\"'\"'{print $2}'\"'\"'`' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '       if [[ $3 -eq 1 ]] ; then INSTANCE_IP1=$INSTANCE_IP ; fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '       if [[ $3 -eq 2 ]] ; then INSTANCE_IP2=$INSTANCE_IP ; fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '};' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo 'while [ . ]; do  ' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    ROUTE_STATE=`/opt/aws/bin/ec2-describe-route-tables $REMOTE_ROUTE1 -U $EC2_URL | grep -w 0.0.0.0/0 | awk '\"'\"'{print $2}'\"'\"'`'  >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    if [[ $ROUTE_STATE == \"blackhole\" ]]; then' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '      /opt/aws/bin/ec2-replace-route $REMOTE_ROUTE1 -r 0.0.0.0/0 -i $LOCAL_INSTANCE -U $EC2_URL' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '      if [ \"$?\" -eq 0 ]; then  echo `date` \" -- $LOCAL_INSTANCE successfully took over $REMOTE_ROUTE1\" ; NAT_HEALTHY=1 ; fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  check_route $REMOTE_ROUTE1 $AZ1 1 $INSTANCE_IP1' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  if [[ $REMOTE_ROUTE2 != \"\" ]] ; then  #If there is a third AZ to monitor, it will be done here' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    ROUTE_STATE=`/opt/aws/bin/ec2-describe-route-tables $REMOTE_ROUTE2 -U $EC2_URL | grep -w 0.0.0.0/0 | awk '\"'\"'{print $2}'\"'\"'`'  >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    if [[ $ROUTE_STATE == \"blackhole\" ]]; then' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '      /opt/aws/bin/ec2-replace-route $REMOTE_ROUTE2 -r 0.0.0.0/0 -i $LOCAL_INSTANCE -U $EC2_URL' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '      if [ \"$?\" -eq 0 ]; then  echo `date` \" -- $LOCAL_INSTANCE successfully took over $REMOTE_ROUTE2\" ; NAT_HEALTHY=1 ; fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    fi' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '    check_route $REMOTE_ROUTE2 $AZ2 2 $INSTANCE_IP2' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  fi ' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  let count++' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "echo '  sleep 4'\n",
+                                "echo 'done' >>/usr/local/bin/nat_monitor.tmp\n",
+                                "mv /usr/local/bin/nat_monitor.tmp /usr/local/bin/nat_monitor.sh\n",
+                                "chmod a+x /usr/local/bin/nat_monitor.sh\n",
+                                "if grep \"sh /var/lib/cloud/data/user-data.txt\" /etc/rc.local ; then echo \"command exists in rc.local\"\n",
+                                "else echo 'sh /var/lib/cloud/data/user-data.txt' >>/etc/rc.local ; fi\n",
+                                "/usr/local/bin/nat_monitor.sh >/usr/local/bin/nat_monitor.log &\n"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "Type": "AWS::AutoScaling::LaunchConfiguration"
+        }
+    }
+}

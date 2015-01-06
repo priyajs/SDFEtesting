@@ -1,0 +1,227 @@
+{
+"AWSTemplateFormatVersion" : "2010-09-09",
+"Description" : "Template to create a SeGrid Cluster for SD Front-end testing",
+"Parameters" : {
+	"KeyPair" : {
+	   "Type" : "String",
+	   "Description" : "The EC2 Key Pair to allow SSH access to the instances. The keypair must already exist in EC2.",
+	   "Default" : "SeGrid-aws-agrm-perftest-USW"
+	},
+	"HubInstanceType" : {
+	   "Description" : "Type of EC2 instance to launch",
+	   "Type" : "String",
+	   "Default" : "m3.medium"
+      },
+  "HTTPPort": {
+  	"Description": "The port that SE Grid will listen for HTTP requests",
+		"Type": "String",
+		"MinLength": "1",
+		"Default": "4200"
+	},
+	"MaxASGSize": {
+		   "Description": "The total number of instances allowed for the node auto scaling group",
+		   "Type": "String",
+		   "Default": "4"
+		},
+	"MinASGSize": {
+		   "Description": "The minimum nuber of instances allowed for the node auto scaling group",
+		   "Type": "String",
+		   "Default": "1"
+	},
+	"InstanceType" : {
+	   "Description" : "Type of EC2 instance to launch",
+	   "Type" : "String",
+	   "Default" : "m3.large"
+  },
+"IAMRoleProfile": {	
+        "Description": "Enter the IAM Role Profile created for the account to use",
+        "Type": "String",
+        "Default": "perfTestRW"
+	}
+},
+"Mappings" : {
+    "AWSInstanceType2Arch" : {
+      "t1.micro"    : { "Arch" : "64" },
+      "m1.small"    : { "Arch" : "64" },
+      "m3.medium"   : { "Arch" : "64" },
+      "m3.large"    : { "Arch" : "64" },
+      "m1.xlarge"   : { "Arch" : "64" },
+      "m2.xlarge"   : { "Arch" : "64" },
+      "m2.2xlarge"  : { "Arch" : "64" },
+      "m2.4xlarge"  : { "Arch" : "64" }
+    },
+"AWSRegionArch2AMI" : {
+      "us-west-2"      : { "64" : "ami-479cd077" }
+    },
+"AWSRegionArch2AMIHub" : {
+      "us-west-2"      : { "64" : "ami-1997da29" }
+    }
+},
+"Resources" : {
+"IAMRole": {
+  	"Properties": {
+  		"Path": "/",
+  		"Roles": [{
+  			"Ref": "IAMRoleProfile"
+  			}]
+	},
+	"Type": "AWS::IAM::InstanceProfile"
+    },
+	"SeGridHub" : {
+		"Type" : "AWS::AutoScaling::AutoScalingGroup",
+		"Properties" : {
+				"AvailabilityZones" : { "Fn::GetAZs" : { "Ref" : "AWS::Region" } },
+				"Cooldown" : "60",
+				"DesiredCapacity" : "1",
+				"HealthCheckGracePeriod" : "120",
+				"HealthCheckType" : "EC2",
+				"LaunchConfigurationName" : { "Ref" : "SeHubAutoScaleLaunchConfiguration" },
+				"MaxSize" : "1",
+				"MinSize" : "1",
+				"LoadBalancerNames" : [ "SDFE-Se" ],
+				"Tags" : [
+					{
+							"Key" : "Name",
+							"Value" : { "Fn::Join" : ["-" , [{ "Ref" : "AWS::StackName" }, "SD", "Hub" ] ] },
+							"PropagateAtLaunch" : "true"
+					}
+				]
+		}
+	},
+	"SeHubAutoScaleLaunchConfiguration" : {
+		"Type" : "AWS::AutoScaling::LaunchConfiguration",
+		"Properties" : {
+			"ImageId" : {
+				"Fn::FindInMap" : [
+					"AWSRegionArch2AMIHub", { "Ref" : "AWS::Region" },
+						{ "Fn::FindInMap" :
+							[ "AWSInstanceType2Arch", { "Ref" : "HubInstanceType" }, "Arch" ]
+						}
+				]
+			},
+			"InstanceType" : { "Ref" : "HubInstanceType" },
+			"KeyName" : { "Ref" : "KeyPair" },
+			"SecurityGroups" : [ "sg-c2ce51a7","sg-4d128728" ],
+			"IamInstanceProfile": { "Ref": "IAMRole" },
+			"UserData" : {
+				"Fn::Base64" : {
+					"Fn::Join" : [ "\n",
+						[
+							"#!/bin/bash",
+							"cd /home/ubuntu",
+							"aws s3 sync s3://sdfe-testresources/sdfeFrontEnd/ ./",
+							"sudo cp sdfe-test-prod.py test.py",
+							"EOF"
+						]
+					]
+				}
+			}
+		}
+	},
+	"SeGridNodes" : {
+		"Type" : "AWS::AutoScaling::AutoScalingGroup",
+		"Properties" : {
+			"AvailabilityZones" : { "Fn::GetAZs" : { "Ref" : "AWS::Region" } },
+			"Cooldown" : "60",
+			"DesiredCapacity" : "1",
+			"HealthCheckGracePeriod" : "60",
+			"HealthCheckType" : "EC2",
+			"LaunchConfigurationName" : { "Ref" : "SeGridAutoScaleLaunchConfiguration" },
+			"MinSize": { "Ref" : "MinASGSize" },
+      "MaxSize": { "Ref" : "MaxASGSize" },
+			"Tags" : [
+				{
+						"Key" : "Name",
+						"Value" : { "Fn::Join" : ["-" , [{ "Ref" : "AWS::StackName" }, "SD", "Nodes" ] ] },
+						"PropagateAtLaunch" : "true"
+				}
+			]
+		}
+	},
+	"SeGridAutoScaleLaunchConfiguration" : {
+		"Type" : "AWS::AutoScaling::LaunchConfiguration",
+		"Properties" : {
+			"ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
+						{ "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "InstanceType" },
+						"Arch" ] } ] },
+			"InstanceType" : { "Ref" : "InstanceType" },
+			"KeyName" : { "Ref" : "KeyPair" },
+			"SecurityGroups" : [ "sg-c2ce51a7","sg-4d128728" ],
+			"IamInstanceProfile": { "Ref": "IAMRole" },
+			"UserData" : {
+				"Fn::Base64" : {
+					"Fn::Join" : [ "\n",
+						[
+						"#!/bin/bash",
+						"cd /home/ubuntu",
+						"aws s3 cp s3://sdfe-testresources/sdfeFrontEnd/nodeStart.sh nodeStart.sh",
+						"sh nodeStart.sh",
+						"EOF"
+						]
+					]
+				}
+			}
+		}
+	},
+
+	"WebServerScaleUpPolicy" : {
+	  "Type" : "AWS::AutoScaling::ScalingPolicy",
+	  "Properties" : {
+		"AdjustmentType" : "ChangeInCapacity",
+		"AutoScalingGroupName" : { "Ref" : "SeGridNodes" },
+		"Cooldown" : "60",
+		"ScalingAdjustment" : "1"
+	  }
+	},
+	"WebServerScaleDownPolicy" : {
+	  "Type" : "AWS::AutoScaling::ScalingPolicy",
+	  "Properties" : {
+		"AdjustmentType" : "ChangeInCapacity",
+		"AutoScalingGroupName" : { "Ref" : "SeGridNodes" },
+		"Cooldown" : "60",
+		"ScalingAdjustment" : "-1"
+	  }
+	},
+
+	"CPUAlarmHigh": {
+	 "Type": "AWS::CloudWatch::Alarm",
+	 "Properties": {
+		"AlarmDescription": "Scale-up if CPU > 25% for 1 minute",
+		"MetricName": "CPUUtilization",
+		"Namespace": "AWS/EC2",
+		"Statistic": "Average",
+		"Period": "60",
+		"EvaluationPeriods": "2",
+		"Threshold": "25",
+		"AlarmActions": [ { "Ref": "WebServerScaleUpPolicy" } ],
+		"Dimensions": [
+		  {
+			"Name": "AutoScalingGroupName",
+			"Value": { "Ref": "SeGridNodes" }
+		  }
+		],
+		"ComparisonOperator": "GreaterThanThreshold"
+	  }
+	},
+	"CPUAlarmLow": {
+	 "Type": "AWS::CloudWatch::Alarm",
+	 "Properties": {
+		"AlarmDescription": "Scale-down if CPU < 5% for 20 minutes",
+		"MetricName": "CPUUtilization",
+		"Namespace": "AWS/EC2",
+		"Statistic": "Average",
+		"Period": "600",
+		"EvaluationPeriods": "3",
+		"Threshold": "5",
+		"AlarmActions": [ { "Ref": "WebServerScaleDownPolicy" } ],
+		"Dimensions": [
+		  {
+			"Name": "AutoScalingGroupName",
+			"Value": { "Ref": "SeGridNodes" }
+		  }
+		],
+		"ComparisonOperator": "LessThanThreshold"
+	  }
+	}
+	}
+}
