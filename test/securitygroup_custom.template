@@ -1,0 +1,454 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Creates security groups for a webapp",
+    "Outputs": {
+        "AppELBSecurityGroup": {
+            "Description": "Security group for the application servers ELB",
+            "Value": {
+                "Ref": "AppELBSecurityGroup"
+            }
+        },
+        "AppServerSecurityGroup": {
+            "Description": "Security group for the application servers",
+            "Value": {
+                "Ref": "AppServerSecurityGroup"
+            }
+        },
+        "DBSecurityGroup": {
+            "Description": "Security group for the database",
+            "Value": {
+                "Ref": "DBSecurityGroup"
+            }
+        },
+        "WebELBSecurityGroup": {
+            "Description": "Security group for the web servers ELB",
+            "Value": {
+                "Ref": "WebELBSecurityGroup"
+            }
+        },
+        "WebServerSecurityGroup": {
+            "Description": "Security group for the web servers",
+            "Value": {
+                "Ref": "WebServerSecurityGroup"
+            }
+        },
+        "BastionSecurityGroup": {
+            "Description": "Security group for the bastion servers",
+            "Value": {
+                "Ref": "BastionSecurityGroup"
+            }
+        }
+    },
+    "Parameters": {
+        "VPCID": {
+            "Description": "ID of the VPC that will use the security groups",
+            "MinLength": "12",
+            "Type": "String"
+        }
+    },    
+    "Resources": {
+        "BastionSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "Enable access to the Bastion host",
+                "SecurityGroupEgress": [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "1",
+                        "IpProtocol": "-1",
+                        "ToPort": "65535"
+                    }
+                ],
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "198.185.18.0/24",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    },
+                    {
+                        "CidrIp": "198.185.18.0/24",
+                        "FromPort": "3389",
+                        "IpProtocol": "tcp",
+                        "ToPort": "3389"
+                    },
+                    {
+                        "CidrIp": "198.185.23.0/24",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    },
+                    {
+                        "CidrIp": "198.185.23.0/24",
+                        "FromPort": "3389",
+                        "IpProtocol": "tcp",
+                        "ToPort": "3389"
+                    },
+                    {
+                        "CidrIp": "198.185.24.0/24",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    },
+                    {
+                        "CidrIp": "198.185.24.0/24",
+                        "FromPort": "3389",
+                        "IpProtocol": "tcp",
+                        "ToPort": "3389"
+                    },
+                    {
+                        "CidrIp": "198.185.25.0/24",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    },
+                    {
+                        "CidrIp": "198.185.25.0/24",
+                        "FromPort": "3389",
+                        "IpProtocol": "tcp",
+                        "ToPort": "3389"
+                    },
+                    {
+                        "CidrIp": "145.36.0.0/16",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    },
+                    {
+                        "CidrIp": "145.36.0.0/16",
+                        "FromPort": "3389",
+                        "IpProtocol": "tcp",
+                        "ToPort": "3389"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "VPCID"
+                }
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        
+        "AppELB8080Ingress": {
+            "Properties": {
+                "FromPort": "8080",
+                "GroupId": {
+                    "Ref": "AppELBSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "WebServerSecurityGroup"
+                },
+                "ToPort": "8080"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },
+        "AppELB8443Ingress": {
+            "Properties": {
+                "FromPort": "8443",
+                "GroupId": {
+                    "Ref": "AppELBSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "WebServerSecurityGroup"
+                },
+                "ToPort": "8443"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },
+        "AppELBSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "Security group for the application servers ELB",
+                "SecurityGroupEgress": [
+                    {
+						"CidrIp": "0.0.0.0/0",
+                        "FromPort": "-1",
+                        "IpProtocol": "-1",
+                        "ToPort": "-1"
+					}
+                ],
+                "VpcId": {
+                    "Ref": "VPCID"
+                }
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+		"AppServerUDPIngress": {
+            "Properties": {
+                "FromPort": "0",
+                "GroupId": {
+                    "Ref": "AppServerSecurityGroup"
+                },
+                "IpProtocol": "udp",
+                "SourceSecurityGroupId": {
+                    "Ref": "AppServerSecurityGroup"
+                },
+                "ToPort": "65535"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },		
+		"AppServer4200Ingress": {
+            "Properties": {
+                "FromPort": "4200",
+                "GroupId": {
+                    "Ref": "AppServerSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "WebELBSecurityGroup"
+                },
+                "ToPort": "4200"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },
+        "AppServer8080Ingress": {
+            "Properties": {
+                "FromPort": "-1",
+                "GroupId": {
+                    "Ref": "AppServerSecurityGroup"
+                },
+                "IpProtocol": "-1",
+                "SourceSecurityGroupId": {
+                    "Ref": "AppELBSecurityGroup"
+                },
+                "ToPort": "-1"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },
+        "AppServer8443Ingress": {
+            "Properties": {
+                "FromPort": "-1",
+                "GroupId": {
+                    "Ref": "AppServerSecurityGroup"
+                },
+                "IpProtocol": "-1",
+                "SourceSecurityGroupId": {
+                    "Ref": "AppServerSecurityGroup"
+                },
+                "ToPort": "-1"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },
+        "AppServer3389Ingress": {
+            "Properties": {
+                "FromPort": "3389",
+                "GroupId": {
+                    "Ref": "AppServerSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "BastionSecurityGroup"
+                },
+                "ToPort": "3389"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },    
+        "AppServer22Ingress": {
+            "Properties": {
+                "FromPort": "22",
+                "GroupId": {
+                    "Ref": "AppServerSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "BastionSecurityGroup"
+                },
+                "ToPort": "22"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },        
+        "AppServerSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "Security group for the application servers",
+                "SecurityGroupEgress": [
+                    {
+						"CidrIp": "0.0.0.0/0",
+                        "FromPort": "-1",
+                        "IpProtocol": "-1",
+                        "ToPort": "-1"
+					}
+                ],
+                "VpcId": {
+                    "Ref": "VPCID"
+                }
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        "DB3306Ingress": {
+            "Properties": {
+                "FromPort": "3306",
+                "GroupId": {
+                    "Ref": "DBSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "AppServerSecurityGroup"
+                },
+                "ToPort": "3306"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },
+        "DB1521Ingress": {
+            "Properties": {
+                "FromPort": "1521",
+                "GroupId": {
+                    "Ref": "DBSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "AppServerSecurityGroup"
+                },
+                "ToPort": "1521"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },
+        "DB5432Ingress": {
+            "Properties": {
+                "FromPort": "5432",
+                "GroupId": {
+                    "Ref": "DBSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "AppServerSecurityGroup"
+                },
+                "ToPort": "5432"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },    
+        "DB1433Ingress": {
+            "Properties": {
+                "FromPort": "1433",
+                "GroupId": {
+                    "Ref": "DBSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "AppServerSecurityGroup"
+                },
+                "ToPort": "1433"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },        
+        "DBSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "Security group for the database",
+                "VpcId": {
+                    "Ref": "VPCID"
+                }
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        "WebELBSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "Security group for the web servers ELB",
+                "SecurityGroupEgress": [
+                    {
+						"CidrIp": "0.0.0.0/0",
+                        "FromPort": "-1",
+                        "IpProtocol": "-1",
+                        "ToPort": "-1"
+					}
+                ],
+                "SecurityGroupIngress": [
+				    {
+                        "SourceSecurityGroupId": {
+							"Ref": "AppServerSecurityGroup"
+							},
+                        "FromPort": "4200",
+                        "IpProtocol": "tcp",
+                        "ToPort": "4200"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "80",
+                        "IpProtocol": "tcp",
+                        "ToPort": "80"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "443",
+                        "IpProtocol": "tcp",
+                        "ToPort": "443"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "VPCID"
+                }
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        "WebServer443Ingress": {
+            "Properties": {
+                "FromPort": "443",
+                "GroupId": {
+                    "Ref": "WebServerSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "WebELBSecurityGroup"
+                },
+                "ToPort": "443"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },
+        "WebServer80Ingress": {
+            "Properties": {
+                "FromPort": "80",
+                "GroupId": {
+                    "Ref": "WebServerSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "WebELBSecurityGroup"
+                },
+                "ToPort": "80"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },
+        "WebServer3389Ingress": {            
+            "Properties": {
+                "FromPort": "3389",
+                "GroupId": {
+                    "Ref": "WebServerSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "BastionSecurityGroup"
+                },
+                "ToPort": "3389"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },    
+        "WebServer22Ingress": {
+            "Properties": {
+                "FromPort": "22",
+                "GroupId": {
+                    "Ref": "WebServerSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Ref": "BastionSecurityGroup"
+                },
+                "ToPort": "22"
+            },
+            "Type": "AWS::EC2::SecurityGroupIngress"
+        },        
+        "WebServerSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "Security group for the web servers",
+                "SecurityGroupEgress": [
+                    {
+						"CidrIp": "0.0.0.0/0",
+                        "FromPort": "-1",
+                        "IpProtocol": "-1",
+                        "ToPort": "-1"
+					}
+                ],
+                "VpcId": {
+                    "Ref": "VPCID"
+                }
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        }
+    }
+}
