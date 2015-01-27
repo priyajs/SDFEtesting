@@ -23,25 +23,23 @@ hub = sys.argv[3]
 env = sys.argv[4]
 #env = 'qa.sdfe'
 
-#--- Set Region --------------------
+#---adding for region ----#
 availzone=urllib2.urlopen('http://169.254.169.254/latest/meta-data/placement/availability-zone')
 zone=availzone.read()
+#print(zone)
 if(zone.find('eu-west-1') > -1):
  #print 'eu-west-1'
  region='EUW1'
+ #print(region)
 if(zone.find('us-east-1') > -1):
  #print 'us-east-1'
  region='USE1'
-if(zone.find('us-west-1') > -1):
- #print 'us-west-1'
- region='USW1'
 if(zone.find('us-west-2') > -1):
  #print 'us-west-2'
  region='USW2'
 if(zone.find('ap-southeast-1') > -1):
  #print 'ap-southeast-1'
  region='APSE1'
-
 
 statsDHost='statsd.elsst.com'
 """
@@ -264,7 +262,7 @@ while numLoops > loop:
     time.sleep(random.uniform(30,45))
 
   except:
-    print('loading browseri or other failed')
+    print('loading browser or other failed')
     print datetime.datetime.now()
     time.sleep(5)
     pass
