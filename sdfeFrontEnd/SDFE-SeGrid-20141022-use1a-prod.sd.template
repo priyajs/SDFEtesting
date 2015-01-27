@@ -1,6 +1,6 @@
 {
 "AWSTemplateFormatVersion" : "2010-09-09",
-"Description" : "Template to create a SeGrid Cluster for SD Front-end testing USWeast1a",
+"Description" : "Template to create a SeGrid Cluster for SD Front-end testing USWeast1",
 "Parameters" : {
 	"KeyPair" : {
 	   "Type" : "String",
