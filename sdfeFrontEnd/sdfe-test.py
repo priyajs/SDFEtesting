@@ -23,6 +23,26 @@ hub = sys.argv[3]
 env = sys.argv[4]
 #env = 'qa.sdfe'
 
+#--- Set Region --------------------
+availzone=urllib2.urlopen('http://169.254.169.254/latest/meta-data/placement/availability-zone')
+zone=availzone.read()
+if(zone.find('eu-west-1') > -1):
+ #print 'eu-west-1'
+ region='EUW1'
+if(zone.find('us-east-1') > -1):
+ #print 'us-east-1'
+ region='USE1'
+if(zone.find('us-west-1') > -1):
+ #print 'us-west-1'
+ region='USW1'
+if(zone.find('us-west-2') > -1):
+ #print 'us-west-2'
+ region='USW2'
+if(zone.find('ap-southeast-1') > -1):
+ #print 'ap-southeast-1'
+ region='APSE1'
+
+
 statsDHost='statsd.elsst.com'
 """
   Define UDP connection to send data to statsD
@@ -82,7 +102,7 @@ def getPage(resource):
     else:
       #print ('getting metrics')
       metricsCollect(titl,'NA')
-      cnt='sd.article.se.'+envPrint+'.pass:1|c\n'
+      cnt='sd.article.se.'+envPrint+'.'+region+'.pass:1|c\n'
 
       # Send data to graphite
       UDPSock.sendto(cnt,addr)
@@ -115,11 +135,11 @@ def metricsCollect(dtitl,ID):
       ttfb = str(int(respS-navS))
       sr = str(int(domCL-navS))
       #print('\nperf details found\n')
-      l.append('sd.article.se.'+envPrint+'.load:'+pgLoad+'|ms\n')
-      l.append('sd.article.se.'+envPrint+'.pgi:'+domI+'|ms\n')
-      l.append('sd.article.se.'+envPrint+'.ttlb:'+cont+'|ms\n')
-      l.append('sd.article.se.'+envPrint+'.ttfb:'+ttfb+'|ms\n')
-      l.append('sd.article.se.'+envPrint+'.sr:'+sr+'|ms\n')
+      l.append('sd.article.se.'+envPrint+'.'+region+'.load:'+pgLoad+'|ms\n')
+      l.append('sd.article.se.'+envPrint+'.'+region+'.pgi:'+domI+'|ms\n')
+      l.append('sd.article.se.'+envPrint+'.'+region+'.ttlb:'+cont+'|ms\n')
+      l.append('sd.article.se.'+envPrint+'.'+region+'.ttfb:'+ttfb+'|ms\n')
+      l.append('sd.article.se.'+envPrint+'.'+region+'.sr:'+sr+'|ms\n')
 
       # Send data to graphite
       statsDdata=''.join(l)
