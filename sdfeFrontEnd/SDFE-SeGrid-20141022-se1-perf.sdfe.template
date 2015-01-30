@@ -74,7 +74,7 @@
 				"LaunchConfigurationName" : { "Ref" : "SeHubAutoScaleLaunchConfiguration" },
 				"MaxSize" : "1",
 				"MinSize" : "1",
-				"LoadBalancerNames" : [ "SDFE-Se" ],
+				"LoadBalancerNames" : [ "sdfe-se-add" ],
 				"Tags" : [
 					{
 							"Key" : "Name",
@@ -151,7 +151,7 @@
 						[
 						"#!/bin/bash",
 						"cd /home/ubuntu",
-						"sudo aws s3 cp s3://sdfe-testresources/sdfeFrontEnd/nodeStart_sing.sh nodeStart.sh",
+						"sudo aws s3 cp s3://sdfe-testresources/sdfeFrontEnd/nodeStart_sing_add.sh nodeStart.sh",
 						"sh nodeStart.sh",
 						"EOF"
 						]
