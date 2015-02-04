@@ -216,8 +216,8 @@ while numLoops > loop:
         envPrint=env
     elif(env.find('new') > -1):
         baseURL = 'www-new.sciencedirect.com'
-        base='newsd'
-        envPrint='newsd'        
+        base='sdnew'
+        envPrint='sdnew'        
     else:
       baseURL = 'www.sciencedirect.com'
       base='sd'
