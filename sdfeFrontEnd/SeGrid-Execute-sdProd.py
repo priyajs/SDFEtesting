@@ -6,6 +6,7 @@ import time
 #resp=urllib2.urlopen('http://169.254.169.254/latest/meta-data/public-hostname')
 #PHOST=resp.read()
 PHOST='localhost'
+Env='prod'
 inst=urllib2.urlopen('http://169.254.169.254/latest/meta-data/instance-id')
 instID=inst.read()
 print(instID)
@@ -53,7 +54,7 @@ freeCount=freeCheck()
 while freeCount>0:
   #print 'I have entered the loop'
   #ex=Popen('python test.py 50 chrome '+PHOST+' '+instID+'&',shell=True,close_fds=True)
-  ex=Popen('python test.py 50 chrome '+PHOST+' prod&',shell=True,close_fds=True)
+  ex=Popen('python test.py 50 chrome '+PHOST+' '+Env+'&',shell=True,close_fds=True)
   exOut=ex.communicate()
   print(exOut)
   try:
