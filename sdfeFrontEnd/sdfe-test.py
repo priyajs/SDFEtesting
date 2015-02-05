@@ -257,7 +257,7 @@ while numLoops > loop:
       idxPii=idx
       Pii=str(PII[idxPii]).strip('[\']')
       titl='Content Delivery'
-      if (browserLoop == 0 and base=='sdfe' and (env != 'prod.sdfe' and env != 'qa.sdfe')):
+      if (browserLoop == 0 and base=='sdfe' and (env != 'prod.sdfe' and env != 'qa.sdfe' and env != 'perf.sdfe')):
           #print('sdfe, take 1')
           url="http://sdfe-engineers:Target947Tirpitz@"+baseURL+"/science/article/pii/"+Pii
       else:
