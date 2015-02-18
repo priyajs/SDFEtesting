@@ -106,8 +106,8 @@
 							"#!/bin/bash",
 							"cd /home/ubuntu",
 							"sudo aws s3 sync s3://sdfe-testresources/sdfeFrontEnd/ ./",
-							"sudo cp sdfe-test-newsd.py test.py",
-							"sudo cp SeGrid-Execute-sdProd.py SeGrid-Execute.py",
+							"sudo cp sdfe-test.py test.py",
+							"sudo cp SeGrid-Execute-sdnewProd.py SeGrid-Execute.py",
 							"EOF"
 						]
 					]
