@@ -52,4 +52,4 @@ sleep 5m
 # start new stack 
 #
 echo "`date` creating new stack cdc332soaktest eu-west-1" >> $LOGFILE
-aws cloudformation create-stack --stack-name cdc332soaktest --template-url https://s3-us-west-2.amazonaws.com/sdfe-testresources/sdfeFrontEnd/SDFE-SeGrid-20141022-EU-cdc332.template  --parameters ParameterKey=MaxASGSize,ParameterValue=1 --capabilities CAPABILITY_IAM --region eu-west-1
+aws cloudformation create-stack --stack-name cdc332soaktest --template-url https://s3-us-west-2.amazonaws.com/sdfe-testresources/sdfeFrontEnd/SDFE-SeGrid-20141022-EU-cdc332.template  --parameters ParameterKey=MaxASGSize,ParameterValue=1 ParameterKey=InstanceType,ParameterValue=m3.xlarge --capabilities CAPABILITY_IAM --region eu-west-1
