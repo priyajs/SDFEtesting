@@ -14,9 +14,9 @@ renderArticles=sys.argv[3]
 #statsDHost='ec2-54-80-6-76.compute-1.amazonaws.com'
 statsDHost='statsd.elsst.com'
 #---Handling region ----#
-#availzone=urllib2.urlopen('http://169.254.169.254/latest/meta-data/placement/availability-zone')
-#zone=availzone.read()
-zone='eu-west-1'
+availzone=urllib2.urlopen('http://169.254.169.254/latest/meta-data/placement/availability-zone')
+zone=availzone.read()
+#zone='eu-west-1'
 #print(zone)
 if(zone.find('eu-west-1') > -1):
  #print 'eu-west-1'
