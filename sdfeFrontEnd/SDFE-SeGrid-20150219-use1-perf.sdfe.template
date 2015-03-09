@@ -16,7 +16,7 @@
         "sdfe-se-add",
         "SDFE-Se-specialtest"
       ]
-      },
+      },	
 	"HubInstanceType" : {
 	   "Description" : "Type of EC2 instance to launch",
 	   "Type" : "String",

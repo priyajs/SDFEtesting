@@ -1,6 +1,6 @@
 {
 "AWSTemplateFormatVersion" : "2010-09-09",
-"Description" : "Template to create a SeGrid Cluster for SD Front-end testing on perf.sdfe from USEast1 ",
+"Description" : "Template to create a SeGrid Cluster for SD Front-end testing",
 "Parameters" : {
 	"KeyPair" : {
 	   "Type" : "String",
@@ -16,7 +16,6 @@
         "sdfe-se-add",
         "SDFE-Se-specialtest"
       ]
-      },
 	"HubInstanceType" : {
 	   "Description" : "Type of EC2 instance to launch",
 	   "Type" : "String",
@@ -43,7 +42,7 @@
 	   "Type" : "String",
 	   "Default" : "m3.large"
   },
-"IAMRoleProfile": {	
+"IAMRoleProfile": {
         "Description": "Enter the IAM Role Profile created for the account to use",
         "Type": "String",
         "Default": "perfTestRW"
@@ -57,10 +56,10 @@
       "m3.2xlarge"  : { "Arch" : "64" }
     },
 "AWSRegionArch2AMI" : {
-      "us-east-1"      : { "64" : "ami-b83c4cd0" }
+      "ap-southeast-1"      : { "64" : "ami-967455c4" }
     },
 "AWSRegionArch2AMIHub" : {
-      "us-east-1"      : { "64" : "ami-b43c4cdc" }
+      "ap-southeast-1"      : { "64" : "ami-b27455e0" }
     }
 },
 "Resources" : {
@@ -107,7 +106,7 @@
 			},
 			"InstanceType" : { "Ref" : "HubInstanceType" },
 			"KeyName" : { "Ref" : "KeyPair" },
-			"SecurityGroups" : [ "sg-e752ac8a","sg-c155abac" ],
+			"SecurityGroups" : [ "sg-824383e7","sg-cbce08ae" ],
 			"IamInstanceProfile": { "Ref": "IAMRole" },
 			"UserData" : {
 				"Fn::Base64" : {
@@ -153,7 +152,7 @@
 						"Arch" ] } ] },
 			"InstanceType" : { "Ref" : "InstanceType" },
 			"KeyName" : { "Ref" : "KeyPair" },
-			"SecurityGroups" : [ "sg-e752ac8a","sg-c155abac" ],
+			"SecurityGroups" : [ "sg-824383e7","sg-cbce08ae" ],
 			"IamInstanceProfile": { "Ref": "IAMRole" },
 			"UserData" : {
 				"Fn::Base64" : {
@@ -161,7 +160,7 @@
 						[
 						"#!/bin/bash",
 						"cd /home/ubuntu",
-						"sudo aws s3 cp s3://sdfe-testresources/sdfeFrontEnd/nodeStart_USE1a.sh nodeStart.sh",
+						"sudo aws s3 cp s3://sdfe-testresources/sdfeFrontEnd/nodeStart_sing_add.sh nodeStart.sh",
 						"sh nodeStart.sh",
 						"EOF"
 						]

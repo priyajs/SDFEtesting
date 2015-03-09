@@ -1,6 +1,6 @@
 {
 "AWSTemplateFormatVersion" : "2010-09-09",
-"Description" : "Template to create a SeGrid Cluster for SD Front-end testing on perf.sdfe from USEast1 ",
+"Description" : "Template to create a SeGrid Cluster for SD Front-end testing Sydney perf.sdfe",
 "Parameters" : {
 	"KeyPair" : {
 	   "Type" : "String",
@@ -43,7 +43,7 @@
 	   "Type" : "String",
 	   "Default" : "m3.large"
   },
-"IAMRoleProfile": {	
+"IAMRoleProfile": {
         "Description": "Enter the IAM Role Profile created for the account to use",
         "Type": "String",
         "Default": "perfTestRW"
@@ -57,10 +57,10 @@
       "m3.2xlarge"  : { "Arch" : "64" }
     },
 "AWSRegionArch2AMI" : {
-      "us-east-1"      : { "64" : "ami-b83c4cd0" }
+      "ap-southeast-2"      : { "64" : "ami-e76f03dd" }
     },
 "AWSRegionArch2AMIHub" : {
-      "us-east-1"      : { "64" : "ami-b43c4cdc" }
+      "ap-southeast-2"      : { "64" : "ami-e36f03d9" }
     }
 },
 "Resources" : {
@@ -107,7 +107,7 @@
 			},
 			"InstanceType" : { "Ref" : "HubInstanceType" },
 			"KeyName" : { "Ref" : "KeyPair" },
-			"SecurityGroups" : [ "sg-e752ac8a","sg-c155abac" ],
+			"SecurityGroups" : [ "sg-0929e36c","sg-7b2ee41e" ],
 			"IamInstanceProfile": { "Ref": "IAMRole" },
 			"UserData" : {
 				"Fn::Base64" : {
@@ -153,7 +153,7 @@
 						"Arch" ] } ] },
 			"InstanceType" : { "Ref" : "InstanceType" },
 			"KeyName" : { "Ref" : "KeyPair" },
-			"SecurityGroups" : [ "sg-e752ac8a","sg-c155abac" ],
+			"SecurityGroups" : [ "sg-0929e36c","sg-7b2ee41e" ],
 			"IamInstanceProfile": { "Ref": "IAMRole" },
 			"UserData" : {
 				"Fn::Base64" : {
@@ -161,7 +161,7 @@
 						[
 						"#!/bin/bash",
 						"cd /home/ubuntu",
-						"sudo aws s3 cp s3://sdfe-testresources/sdfeFrontEnd/nodeStart_USE1a.sh nodeStart.sh",
+						"sudo aws s3 cp s3://sdfe-testresources/sdfeFrontEnd/nodeStart_SYDSE2.sh nodeStart.sh",
 						"sh nodeStart.sh",
 						"EOF"
 						]
