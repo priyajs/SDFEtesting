@@ -7,16 +7,6 @@
 	   "Description" : "The EC2 Key Pair to allow SSH access to the instances. The keypair must already exist in EC2.",
 	   "Default" : "awsPerfTest"
 	},
-	"ELB" : {
-	   "Description" : "ELB Name - Use SDFE-Se-specialtest only in the us-west-2",
-	   "Type" : "String",
-	   "Default" : "SDFE-Se",
-	   "AllowedValues": [
-	    "SDFE-Se",
-        "sdfe-se-add",
-        "SDFE-Se-specialtest"
-      ]
-      },
 	"HubInstanceType" : {
 	   "Description" : "Type of EC2 instance to launch",
 	   "Type" : "String",
@@ -84,7 +74,7 @@
 				"LaunchConfigurationName" : { "Ref" : "SeHubAutoScaleLaunchConfiguration" },
 				"MaxSize" : "1",
 				"MinSize" : "1",
-				"LoadBalancerNames" : [{ "Ref": "ELB" }],
+				"LoadBalancerNames" : [ "SDFE-Se" ],
 				"Tags" : [
 					{
 							"Key" : "Name",
