@@ -1,6 +1,6 @@
 {
 "AWSTemplateFormatVersion" : "2010-09-09",
-"Description" : "Template to create a SeGrid Cluster for SD Front-end testing for new akamai url with 2nd elb",
+"Description" : "Template to create a SeGrid Cluster for SD Front-end testing Ireland SD",
 "Parameters" : {
 	"KeyPair" : {
 	   "Type" : "String",
@@ -34,7 +34,7 @@
 		   "Default": "4"
 		},
 	"MinASGSize": {
-		   "Description": "The minimum nuber of instances allowed for the node auto scaling group",
+		   "Description": "The minimum number of instances allowed for the node auto scaling group",
 		   "Type": "String",
 		   "Default": "1"
 	},
@@ -57,10 +57,10 @@
       "m3.2xlarge"  : { "Arch" : "64" }
     },
 "AWSRegionArch2AMI" : {
-      "ap-southeast-1"      : { "64" : "ami-967455c4" }
+      "eu-west-1"      : { "64" : "ami-b2ce60c5" }
     },
 "AWSRegionArch2AMIHub" : {
-      "ap-southeast-1"      : { "64" : "ami-b27455e0" }
+      "eu-west-1"      : { "64" : "ami-a4ce60d3" }
     }
 },
 "Resources" : {
@@ -107,7 +107,7 @@
 			},
 			"InstanceType" : { "Ref" : "HubInstanceType" },
 			"KeyName" : { "Ref" : "KeyPair" },
-			"SecurityGroups" : [ "sg-824383e7","sg-cbce08ae" ],
+			"SecurityGroups" : [ "sg-4318a526","sg-a51ba6c0" ],
 			"IamInstanceProfile": { "Ref": "IAMRole" },
 			"UserData" : {
 				"Fn::Base64" : {
@@ -116,9 +116,9 @@
 							"#!/bin/bash",
 							"cd /home/ubuntu",
 							"sudo aws s3 sync s3://sdfe-testresources/sdfeFrontEnd/ ./",
-							"#sudo cp sdfePIIwhitelistwl.csv sdfePIIwhitelist.csv",
+							"sudo cp sdPII.csv sdfePIIwhitelistwl.csv",
 							"sudo cp sdfe-test.py test.py",
-							"sudo cp SeGrid-Execute-sdnewProd.py SeGrid-Execute.py",
+							"sudo cp SeGrid-Execute-sdProd.py SeGrid-Execute.py",
 							"EOF"
 						]
 					]
@@ -154,7 +154,7 @@
 						"Arch" ] } ] },
 			"InstanceType" : { "Ref" : "InstanceType" },
 			"KeyName" : { "Ref" : "KeyPair" },
-			"SecurityGroups" : [ "sg-824383e7","sg-cbce08ae" ],
+			"SecurityGroups" : [ "sg-4318a526","sg-a51ba6c0" ],
 			"IamInstanceProfile": { "Ref": "IAMRole" },
 			"UserData" : {
 				"Fn::Base64" : {
@@ -162,7 +162,7 @@
 						[
 						"#!/bin/bash",
 						"cd /home/ubuntu",
-						"sudo aws s3 cp s3://sdfe-testresources/sdfeFrontEnd/nodeStart_sing_add.sh nodeStart.sh",
+						"sudo aws s3 cp s3://sdfe-testresources/sdfeFrontEnd/nodeStart_EU.sh nodeStart.sh",
 						"sh nodeStart.sh",
 						"EOF"
 						]
