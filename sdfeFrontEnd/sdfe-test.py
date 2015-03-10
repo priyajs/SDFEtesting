@@ -54,7 +54,10 @@ addr=(statsDHost,8125)
 PII=[]
 try:
   #csvRd = csv.reader(open('/home/ubuntu/PIIs_250k.csv','rb'))
-  csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist.csv','rb'))
+  if (env == 'cdc332'):
+   csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelistwl.csv','rb'))
+  else:
+   csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist.csv','rb'))
   piiCount = 4300
 except:
   csvRd = csv.reader(open('C:/Scripts/whitelist_piis.csv','rb'))
