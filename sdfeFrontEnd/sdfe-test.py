@@ -55,13 +55,13 @@ PII=[]
 try:
   #csvRd = csv.reader(open('/home/ubuntu/PIIs_250k.csv','rb'))
   if (region == 'USE1' or region == 'USW2'):
-	csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist1.1_1.csv','rb'))
+    csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist1.1_1.csv','rb'))
   elif (region == 'EUW1'):
     csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist1.1_2.csv','rb'))
   elif (region == 'APSE1'):
     csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist1.1_3.csv','rb'))
   else:
-	csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist1.1_1.csv','rb'))
+    csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist1.1_1.csv','rb'))
   piiCount = 30000
 except:
   csvRd = csv.reader(open('C:/Scripts/sdfePIIwhitelist1.1_1.csv','rb'))
