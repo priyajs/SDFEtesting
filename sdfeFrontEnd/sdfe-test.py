@@ -54,18 +54,12 @@ addr=(statsDHost,8125)
 PII=[]
 try:
   #csvRd = csv.reader(open('/home/ubuntu/PIIs_250k.csv','rb'))
-  if (region == 'USE1' or region == 'USW2'):
-    csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist1.1_1.csv','rb'))
-  elif (region == 'EUW1'):
-    csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist1.1_2.csv','rb'))
-  elif (region == 'APSE1'):
-    csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist1.1_3.csv','rb'))
-  else:
-    csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist1.1_1.csv','rb'))
-  piiCount = 30000
+  #With all 2.5M articles, the test stopped after a while
+  csvRd = csv.reader(open('/home/ubuntu/sdfePIIwhitelist1.1.csv','rb'))
+  piiCount = 2400000
 except:
-  csvRd = csv.reader(open('C:/Scripts/sdfePIIwhitelist1.1_1.csv','rb'))
-  piiCount = 30000
+  csvRd = csv.reader(open('C:/Scripts/sdfePIIwhitelist1.1.csv','rb'))
+  piiCount = 2400000
 for j in csvRd:
   PII.append(j)
 
