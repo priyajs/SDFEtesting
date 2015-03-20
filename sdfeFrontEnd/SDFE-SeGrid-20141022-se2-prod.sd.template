@@ -24,7 +24,7 @@
 		   "Default": "4"
 		},
 	"MinASGSize": {
-		   "Description": "The minimum nuber of instances allowed for the node auto scaling group",
+		   "Description": "The minimum number of instances allowed for the node auto scaling group",
 		   "Type": "String",
 		   "Default": "1"
 	},
@@ -106,7 +106,7 @@
 							"#!/bin/bash",
 							"cd /home/ubuntu",
 							"sudo aws s3 sync s3://sdfe-testresources/sdfeFrontEnd/ ./",
-							"sudo cp sdfe-test.py test.py",
+							"sudo cp sdfe-test1.0.py test.py",
 							"sudo cp SeGrid-Execute-sdProd.py SeGrid-Execute.py",
 							"EOF"
 						]
