@@ -271,13 +271,15 @@ while numLoops > loop:
         url="http://"+baseURL+"/science/article/pii/"+Pii
       print str(idx)+' '+Pii+' '+url
       getPage(driver.get(url))
-      time.sleep(random.uniform(12.5,16.5))
+      time.sleep(1.5)
+      #time.sleep(random.uniform(12.5,16.5))	  
       browserLoop+=1
 
     #print(browserLoop)
     loop += 1
     egress()
-    time.sleep(random.uniform(30,45))
+    time.sleep(5)
+    #time.sleep(random.uniform(30,45))	
 
   except:
     print('loading browser or other failed')
