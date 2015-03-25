@@ -41,7 +41,7 @@
 	"InstanceType" : {
 	   "Description" : "Type of EC2 instance to launch",
 	   "Type" : "String",
-	   "Default" : "m3.large"
+	   "Default" : "m3.xlarge"
   },
 "IAMRoleProfile": {
         "Description": "Enter the IAM Role Profile created for the account to use",
@@ -130,12 +130,12 @@
 		"Properties" : {
 			"AvailabilityZones" : { "Fn::GetAZs" : { "Ref" : "AWS::Region" } },
 			"Cooldown" : "60",
-			"DesiredCapacity" : "1",
+			"DesiredCapacity" : { "Ref" : "MaxASGSize" },
 			"HealthCheckGracePeriod" : "60",
 			"HealthCheckType" : "EC2",
 			"LaunchConfigurationName" : { "Ref" : "SeGridAutoScaleLaunchConfiguration" },
 			"MinSize": { "Ref" : "MinASGSize" },
-      "MaxSize": { "Ref" : "MaxASGSize" },
+			"MaxSize": { "Ref" : "MaxASGSize" },
 			"Tags" : [
 				{
 						"Key" : "Name",

@@ -7,22 +7,12 @@
 	   "Description" : "The EC2 Key Pair to allow SSH access to the instances. The keypair must already exist in EC2.",
 	   "Default" : "awsPerfTest"
 	},
-	"ELB" : {
-	   "Description" : "ELB Name - Use SDFE-Se-specialtest only in the us-west-2",
-	   "Type" : "String",
-	   "Default" : "SDFE-Se",
-	   "AllowedValues": [
-	    "SDFE-Se",
-        "sdfe-se-add",
-        "SDFE-Se-specialtest"
-      ]
-      },
 	"HubInstanceType" : {
 	   "Description" : "Type of EC2 instance to launch",
 	   "Type" : "String",
 	   "Default" : "m3.medium"
-      },
-  "HTTPPort": {
+      	},
+  	"HTTPPort": {
   	"Description": "The port that SE Grid will listen for HTTP requests",
 		"Type": "String",
 		"MinLength": "1",
@@ -34,7 +24,7 @@
 		   "Default": "4"
 		},
 	"MinASGSize": {
-		   "Description": "The minimum nuber of instances allowed for the node auto scaling group",
+		   "Description": "The minimum number of instances allowed for the node auto scaling group",
 		   "Type": "String",
 		   "Default": "1"
 	},
@@ -42,8 +32,50 @@
 	   "Description" : "Type of EC2 instance to launch",
 	   "Type" : "String",
 	   "Default" : "m3.xlarge"
-  },
-"IAMRoleProfile": {
+  	},
+       	"PrivateSubnets": {
+          "Default": "subnet-1de2316a,subnet-576dd032,subnet-4ee81817",
+          "Description": "Subnet IDs for instances",
+          "Type": "CommaDelimitedList"
+      	},
+  
+      	"PublicSubnets": {
+          "Description": "Subnet IDs for ELBs",
+          "Type": "CommaDelimitedList",
+          "Default": "subnet-1ee23169,subnet-566dd033,subnet-4fe81816"
+      	},
+      	"VpcId" : {
+          "Type" : "String",
+          "Description" : "The VPC Id",
+          "Default" : "vpc-c8cd17ad"
+      	},
+      	"AZ1Index": {
+          "ConstraintDescription": "Must be an integer between 0 and 4 inclusive",
+          "Default": 0,
+          "Description": "First Availability Zone index",
+          "MaxValue": 4,
+          "MinValue": 0,
+          "Type": "Number"
+      	},
+      	"AZ2Index": {
+          "ConstraintDescription": "Must be an integer between 0 and 4 inclusive",
+          "Default": 1,
+          "Description": "Second Availability Zone index",
+          "MaxValue": 4,
+          "MinValue": 0,
+          "Type": "Number"
+      	},
+      	"AZ3Index": {
+          "Description": "Third Availability Zone index, enter NONE if no third AZ.",
+          "Type": "Number",
+          "Default": "2"
+    	},
+     	"ServerSecurityGroupId": {
+          "Description": "Security group Id for the Servers",
+          "Type": "String",
+          "Default": "sg-7cb9fe19"
+    	},   	
+	"IAMRoleProfile": {	
         "Description": "Enter the IAM Role Profile created for the account to use",
         "Type": "String",
         "Default": "perfTestRW"
@@ -57,11 +89,15 @@
       "m3.2xlarge"  : { "Arch" : "64" }
     },
 "AWSRegionArch2AMI" : {
-      "eu-west-1"      : { "64" : "ami-b2ce60c5" }
+      "us-west-2"      : { "64" : "ami-479cd077" }
     },
 "AWSRegionArch2AMIHub" : {
-      "eu-west-1"      : { "64" : "ami-a4ce60d3" }
+      "us-west-2"      : { "64" : "ami-1997da29" }
     }
+},
+"Conditions": {
+    "AZ2Condition": {"Fn::Equals": [ { "Ref": "AZ3Index" }, "NONE"  ] },
+    "AZ3Condition": {"Fn::Not": [{"Fn::Equals": [{ "Ref": "AZ3Index" }, "NONE"]}]}
 },
 "Resources" : {
 "IAMRole": {
@@ -75,23 +111,27 @@
     },
 	"SeGridHub" : {
 		"Type" : "AWS::AutoScaling::AutoScalingGroup",
+		"Condition": "AZ3Condition",
 		"Properties" : {
-				"AvailabilityZones" : { "Fn::GetAZs" : { "Ref" : "AWS::Region" } },
-				"Cooldown" : "60",
-				"DesiredCapacity" : "1",
-				"HealthCheckGracePeriod" : "120",
-				"HealthCheckType" : "EC2",
-				"LaunchConfigurationName" : { "Ref" : "SeHubAutoScaleLaunchConfiguration" },
-				"MaxSize" : "1",
-				"MinSize" : "1",
-				"LoadBalancerNames" : [{ "Ref": "ELB" }],
-				"Tags" : [
-					{
-							"Key" : "Name",
-							"Value" : { "Fn::Join" : ["-" , [{ "Ref" : "AWS::StackName" }, "SD", "Hub" ] ] },
-							"PropagateAtLaunch" : "true"
-					}
-				]
+			"AvailabilityZones": [
+				{ "Fn::Select": [ { "Ref": "AZ1Index" }, { "Fn::GetAZs": "" } ] },
+				{ "Fn::Select": [ { "Ref": "AZ2Index" }, { "Fn::GetAZs": "" } ] },
+				{ "Fn::Select": [ { "Ref": "AZ3Index" }, { "Fn::GetAZs": "" } ] }
+			],
+			"VPCZoneIdentifier": { "Ref": "PrivateSubnets" },
+			"Cooldown" : "60",
+			"DesiredCapacity" : "1",
+			"HealthCheckGracePeriod" : "120",
+			"HealthCheckType" : "EC2",
+			"LaunchConfigurationName" : { "Ref" : "SeHubAutoScaleLaunchConfiguration" },
+			"MaxSize" : "1",
+			"MinSize" : "1",
+			"LoadBalancerNames" : [ "SDFE-Se-VPC-elb" ],
+				"Tags" : [{
+					"Key" : "Name",
+					"Value" : { "Fn::Join" : ["-" , [{ "Ref" : "AWS::StackName" }, "SD", "Hub" ] ] },
+					"PropagateAtLaunch" : "true"
+				}]
 		}
 	},
 	"SeHubAutoScaleLaunchConfiguration" : {
@@ -107,7 +147,7 @@
 			},
 			"InstanceType" : { "Ref" : "HubInstanceType" },
 			"KeyName" : { "Ref" : "KeyPair" },
-			"SecurityGroups" : [ "sg-4318a526","sg-a51ba6c0" ],
+			"SecurityGroups" : [ { "Ref" : "ServerSecurityGroupId" }  ],
 			"IamInstanceProfile": { "Ref": "IAMRole" },
 			"UserData" : {
 				"Fn::Base64" : {
@@ -127,20 +167,26 @@
 	},
 	"SeGridNodes" : {
 		"Type" : "AWS::AutoScaling::AutoScalingGroup",
+		"Condition": "AZ3Condition",
 		"Properties" : {
-			"AvailabilityZones" : { "Fn::GetAZs" : { "Ref" : "AWS::Region" } },
+			"AvailabilityZones": [
+			  { "Fn::Select": [ { "Ref": "AZ1Index" }, { "Fn::GetAZs": "" } ] },
+			  { "Fn::Select": [ { "Ref": "AZ2Index" }, { "Fn::GetAZs": "" } ] },
+			  { "Fn::Select": [ { "Ref": "AZ3Index" }, { "Fn::GetAZs": "" } ] }
+			],
+			"VPCZoneIdentifier": { "Ref": "PrivateSubnets" },		
 			"Cooldown" : "60",
 			"DesiredCapacity" : { "Ref" : "MaxASGSize" },
 			"HealthCheckGracePeriod" : "60",
 			"HealthCheckType" : "EC2",
 			"LaunchConfigurationName" : { "Ref" : "SeGridAutoScaleLaunchConfiguration" },
 			"MinSize": { "Ref" : "MinASGSize" },
-			"MaxSize": { "Ref" : "MaxASGSize" },
+      			"MaxSize": { "Ref" : "MaxASGSize" },
 			"Tags" : [
 				{
-						"Key" : "Name",
-						"Value" : { "Fn::Join" : ["-" , [{ "Ref" : "AWS::StackName" }, "SD", "Nodes" ] ] },
-						"PropagateAtLaunch" : "true"
+				  "Key" : "Name",
+				  "Value" : { "Fn::Join" : ["-" , [{ "Ref" : "AWS::StackName" }, "SD", "Nodes" ] ] },
+				  "PropagateAtLaunch" : "true"
 				}
 			]
 		}
@@ -153,7 +199,7 @@
 						"Arch" ] } ] },
 			"InstanceType" : { "Ref" : "InstanceType" },
 			"KeyName" : { "Ref" : "KeyPair" },
-			"SecurityGroups" : [ "sg-4318a526","sg-a51ba6c0" ],
+			"SecurityGroups" : [ { "Ref" : "ServerSecurityGroupId" } ],
 			"IamInstanceProfile": { "Ref": "IAMRole" },
 			"UserData" : {
 				"Fn::Base64" : {
@@ -161,7 +207,7 @@
 						[
 						"#!/bin/bash",
 						"cd /home/ubuntu",
-						"sudo aws s3 cp s3://sdfe-testresources/sdfeFrontEnd/nodeStart_EU.sh nodeStart.sh",
+						"sudo aws s3 cp s3://sdfe-testresources/sdfeFrontEnd/nodeStart_USW2_VPC.sh nodeStart.sh",
 						"sh nodeStart.sh",
 						"EOF"
 						]
