@@ -26,10 +26,10 @@ hub='localhost'
 #env = 'qa.sdfe'
 env = ['cdc332','cdc314']
 
-timeToRun = 60
+timeToRun = 3800
 #timeToRun = 30
 endTime=int(time.time()+timeToRun)
-'''
+
 #---adding for region ----#
 availzone=urllib2.urlopen('http://169.254.169.254/latest/meta-data/placement/availability-zone')
 zone=availzone.read()
@@ -47,8 +47,8 @@ if(zone.find('us-west-2') > -1):
 if(zone.find('ap-southeast-1') > -1):
  #print 'ap-southeast-1'
  region='APSE1'
-'''
-region='USE1'
+
+#region='USE1'
 statsDHost='statsd.elsst.com'
 """
   Define UDP connection to send data to statsD
@@ -207,8 +207,8 @@ while endTime > time.time():
   """
   try:
     #print('loading browser')
-    #driver=webdriver.Remote("http://"+hub+":4200/wd/hub",desired_capabilities={"browserName": browser})
-    driver=webdriver.Chrome()
+    driver=webdriver.Remote("http://"+hub+":4200/wd/hub",desired_capabilities={"browserName": browser})
+    #driver=webdriver.Chrome()
     #print('wait for it...')
     #print datetime.datetime.now()
     time.sleep(1)
