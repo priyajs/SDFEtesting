@@ -84,7 +84,7 @@ page.viewportSize = {
   height: 600
 };
 
-page.customHeaders={'Authorization':'Basic '+btoa('sdfe-engineers:Target947Tirpitz')}
+//page.customHeaders={'Authorization':'Basic '+btoa('sdfe-engineers:Target947Tirpitz')}
 
 page.onResourceReceived = function (res) {
       if(res.id==1 && (!res.stage || res.stage === 'end')){ 
