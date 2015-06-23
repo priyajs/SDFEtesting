@@ -57,10 +57,10 @@
       "m3.2xlarge"  : { "Arch" : "64" }
     },
 "AWSRegionArch2AMI" : {
-      "us-west-2"      : { "64" : "ami-479cd077" }
+      "us-west-2"      : { "64" : "ami-c51713f5" }
     },
 "AWSRegionArch2AMIHub" : {
-      "us-west-2"      : { "64" : "ami-1997da29" }
+      "us-west-2"      : { "64" : "ami-ab17139b" }
     }
 },
 "Resources" : {
